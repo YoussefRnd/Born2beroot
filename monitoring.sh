@@ -15,9 +15,9 @@ used_memory=$(free --mega | awk 'NR==2{printf $3}')
 memory_usage_percentage=$(awk "BEGIN {printf \"%.2f\", ${used_memory}*100/${total_memory}}")
 
 #Disk usage
-total_disk=$(df -h --total | awk 'END{print $2}')
-used_disk=$(df -h --total | awk 'END{print $3}')
-disk_usage=$(df -h --total | awk 'END{print $5}')
+total_disk=$(df -m | grep "/dev/" | grep -v "/boot" | awk '{total+=$2} END {printf "%.1f", total/1024}')
+used_disk=$(df -m | grep "/dev/" | grep -v "/boot" | awk '{used+=$3} END {printf used}')
+disk_usage=$(awk "BEGIN {printf \"%.1f\", (${used_disk}/1024)*100/${total_disk}}")
 
 #CPU Load
 cpu_load=$(mpstat 1 1 | tail -n 1 | awk '{print 100-$12}')
@@ -36,7 +36,7 @@ user_log=$(who -u | awk '{print $1}' | sort | uniq | wc -l)
 
 #Network
 ip=$(hostname -I)
-mac=$(ip link show | awk 'NR==2{print $2}')
+mac=$(ip link show | awk '/link\/ether/ {print $2}')
 
 #Sudo
 sudo=$(journalctl -q _COMM=sudo | grep COMMAND | wc -l)
@@ -46,8 +46,8 @@ wall "
 	CPU physical: $cpu
 	vCPU: $vcpu
 	Memory Usage: $used_memory/${total_memory}MB (${memory_usage_percentage}%)
-	Disk Usage: $used_disk/$total_disk ($disk_usage)
-	CPU Load: $cpu_load
+	Disk Usage: $used_disk/${total_disk}GB ($disk_usage)
+	CPU Load: ${cpu_load}%
 	Last boot: $last_boot	
 	LVM use: $lvm
 	Connexions TCP: $tcp_connexions ESTABLISHED
